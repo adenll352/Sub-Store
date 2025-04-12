@@ -1,6 +1,6 @@
 import { deleteByName, findByName, updateByName } from '@/utils/database';
 import { getFlowHeaders, normalizeFlowHeader } from '@/utils/flow';
-import { FILES_KEY } from '@/constants';
+import { FILES_KEY, ARTIFACTS_KEY } from '@/constants';
 import { failed, success } from '@/restful/response';
 import $ from '@/core/app';
 import {
@@ -52,8 +52,8 @@ function createFile(req, res) {
 async function getFile(req, res) {
     let { name } = req.params;
     name = decodeURIComponent(name);
-
-    $.info(`正在下载文件：${name}`);
+    const reqUA = req.headers['user-agent'] || req.headers['User-Agent'];
+    $.info(`正在下载文件：${name}\n请求 User-Agent: ${reqUA}`);
     let {
         url,
         subInfoUrl,
@@ -65,7 +65,17 @@ async function getFile(req, res) {
         proxy,
         noCache,
     } = req.query;
-    let $options = {};
+    let $options = {
+        _req: {
+            method: req.method,
+            url: req.url,
+            path: req.path,
+            query: req.query,
+            params: req.params,
+            headers: req.headers,
+            body: req.body,
+        },
+    };
     if (req.query.$options) {
         try {
             // 支持 `#${encodeURIComponent(JSON.stringify({arg1: "1"}))}`
@@ -244,6 +254,20 @@ function updateFile(req, res) {
             ...file,
         };
         $.info(`正在更新文件：${name}...`);
+
+        if (name !== newFile.name) {
+            // update all artifacts referring this collection
+            const allArtifacts = $.read(ARTIFACTS_KEY) || [];
+            for (const artifact of allArtifacts) {
+                if (
+                    artifact.type === 'file' &&
+                    artifact.source === oldFile.name
+                ) {
+                    artifact.source = newFile.name;
+                }
+            }
+            $.write(allArtifacts, ARTIFACTS_KEY);
+        }
 
         updateByName(allFiles, name, newFile);
         $.write(allFiles, FILES_KEY);

@@ -492,6 +492,11 @@ function URI_VMess() {
                 } catch (e) {}
                 let transportPath = params.path;
 
+                // 补上默认 path
+                if (['ws'].includes(proxy.network)) {
+                    transportPath = transportPath || '/';
+                }
+
                 if (proxy.network === 'http') {
                     if (transportHost) {
                         // 1)http(tcp)->host中间逗号(,)隔开
@@ -634,6 +639,9 @@ function URI_VLESS() {
         }
         if (!proxy.network && isShadowrocket && params.obfs) {
             proxy.network = params.obfs;
+            if (['none'].includes(proxy.network)) {
+                proxy.network = 'tcp';
+            }
         }
         if (['websocket'].includes(proxy.network)) {
             proxy.network = 'ws';

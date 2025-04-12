@@ -21,9 +21,9 @@ export default function Loon_Producer() {
             case 'trojan':
                 return trojan(proxy);
             case 'vmess':
-                return vmess(proxy);
+                return vmess(proxy, opts['include-unsupported-proxy']);
             case 'vless':
-                return vless(proxy);
+                return vless(proxy, opts['include-unsupported-proxy']);
             case 'http':
                 return http(proxy);
             case 'socks5':
@@ -132,6 +132,13 @@ function shadowsocks(proxy) {
 
     // tfo
     result.appendIfPresent(`,fast-open=${proxy.tfo}`, 'tfo');
+
+    // block-quic
+    if (proxy['block-quic'] === 'on') {
+        result.append(',block-quic=true');
+    } else if (proxy['block-quic'] === 'off') {
+        result.append(',block-quic=false');
+    }
 
     // udp
     if (proxy.udp) {
@@ -269,7 +276,17 @@ function trojan(proxy) {
     return result.toString();
 }
 
-function vmess(proxy) {
+function vmess(proxy, includeUnsupportedProxy) {
+    if (!includeUnsupportedProxy && proxy['reality-opts']) {
+        throw new Error(`VMess REALITY is not supported`);
+    }
+
+    let isReality = false;
+    if (includeUnsupportedProxy) {
+        if (proxy['reality-opts']) {
+            isReality = true;
+        }
+    }
     const result = new Result(proxy);
     result.append(
         `${proxy.name}=vmess,${proxy.server},${proxy.port},${proxy.cipher},"${proxy.uuid}"`,
@@ -317,16 +334,28 @@ function vmess(proxy) {
         'skip-cert-verify',
     );
 
-    // sni
-    result.appendIfPresent(`,tls-name=${proxy.sni}`, 'sni');
-    result.appendIfPresent(
-        `,tls-cert-sha256=${proxy['tls-fingerprint']}`,
-        'tls-fingerprint',
-    );
-    result.appendIfPresent(
-        `,tls-pubkey-sha256=${proxy['tls-pubkey-sha256']}`,
-        'tls-pubkey-sha256',
-    );
+    if (isReality) {
+        result.appendIfPresent(`,sni=${proxy.sni}`, 'sni');
+        result.appendIfPresent(
+            `,public-key="${proxy['reality-opts']['public-key']}"`,
+            'reality-opts.public-key',
+        );
+        result.appendIfPresent(
+            `,short-id=${proxy['reality-opts']['short-id']}`,
+            'reality-opts.short-id',
+        );
+    } else {
+        // sni
+        result.appendIfPresent(`,tls-name=${proxy.sni}`, 'sni');
+        result.appendIfPresent(
+            `,tls-cert-sha256=${proxy['tls-fingerprint']}`,
+            'tls-fingerprint',
+        );
+        result.appendIfPresent(
+            `,tls-pubkey-sha256=${proxy['tls-pubkey-sha256']}`,
+            'tls-pubkey-sha256',
+        );
+    }
 
     // AEAD
     if (isPresent(proxy, 'aead')) {
@@ -338,6 +367,13 @@ function vmess(proxy) {
     // tfo
     result.appendIfPresent(`,fast-open=${proxy.tfo}`, 'tfo');
 
+    // block-quic
+    if (proxy['block-quic'] === 'on') {
+        result.append(',block-quic=true');
+    } else if (proxy['block-quic'] === 'off') {
+        result.append(',block-quic=false');
+    }
+
     // udp
     if (proxy.udp) {
         result.append(`,udp=true`);
@@ -347,9 +383,27 @@ function vmess(proxy) {
     return result.toString();
 }
 
-function vless(proxy) {
-    if (typeof proxy.flow !== 'undefined' || proxy['reality-opts']) {
+function vless(proxy, includeUnsupportedProxy) {
+    if (
+        !includeUnsupportedProxy &&
+        (typeof proxy.flow !== 'undefined' || proxy['reality-opts'])
+    ) {
         throw new Error(`VLESS XTLS/REALITY is not supported`);
+    }
+    let isXtls = false;
+    let isReality = false;
+    if (includeUnsupportedProxy) {
+        if (proxy['reality-opts']) {
+            isReality = true;
+        }
+
+        if (typeof proxy.flow !== 'undefined') {
+            if (['xtls-rprx-vision'].includes(proxy.flow)) {
+                isXtls = true;
+            } else {
+                throw new Error(`VLESS flow(${proxy.flow}) is not supported`);
+            }
+        }
     }
     const result = new Result(proxy);
     result.append(
@@ -398,19 +452,41 @@ function vless(proxy) {
         'skip-cert-verify',
     );
 
-    // sni
-    result.appendIfPresent(`,tls-name=${proxy.sni}`, 'sni');
-    result.appendIfPresent(
-        `,tls-cert-sha256=${proxy['tls-fingerprint']}`,
-        'tls-fingerprint',
-    );
-    result.appendIfPresent(
-        `,tls-pubkey-sha256=${proxy['tls-pubkey-sha256']}`,
-        'tls-pubkey-sha256',
-    );
+    if (isXtls) {
+        result.appendIfPresent(`,flow=${proxy.flow}`, 'flow');
+    }
+    if (isReality) {
+        result.appendIfPresent(`,sni=${proxy.sni}`, 'sni');
+        result.appendIfPresent(
+            `,public-key="${proxy['reality-opts']['public-key']}"`,
+            'reality-opts.public-key',
+        );
+        result.appendIfPresent(
+            `,short-id=${proxy['reality-opts']['short-id']}`,
+            'reality-opts.short-id',
+        );
+    } else {
+        // sni
+        result.appendIfPresent(`,tls-name=${proxy.sni}`, 'sni');
+        result.appendIfPresent(
+            `,tls-cert-sha256=${proxy['tls-fingerprint']}`,
+            'tls-fingerprint',
+        );
+        result.appendIfPresent(
+            `,tls-pubkey-sha256=${proxy['tls-pubkey-sha256']}`,
+            'tls-pubkey-sha256',
+        );
+    }
 
     // tfo
     result.appendIfPresent(`,fast-open=${proxy.tfo}`, 'tfo');
+
+    // block-quic
+    if (proxy['block-quic'] === 'on') {
+        result.append(',block-quic=true');
+    } else if (proxy['block-quic'] === 'off') {
+        result.append(',block-quic=false');
+    }
 
     // udp
     if (proxy.udp) {
@@ -439,6 +515,14 @@ function http(proxy) {
 
     // tfo
     result.appendIfPresent(`,tfo=${proxy.tfo}`, 'tfo');
+
+    // block-quic
+    if (proxy['block-quic'] === 'on') {
+        result.append(',block-quic=true');
+    } else if (proxy['block-quic'] === 'off') {
+        result.append(',block-quic=false');
+    }
+
     const ip_version = ipVersions[proxy['ip-version']] || proxy['ip-version'];
     result.appendIfPresent(`,ip-mode=${ip_version}`, 'ip-version');
 
@@ -464,6 +548,13 @@ function socks5(proxy) {
 
     // tfo
     result.appendIfPresent(`,tfo=${proxy.tfo}`, 'tfo');
+
+    // block-quic
+    if (proxy['block-quic'] === 'on') {
+        result.append(',block-quic=true');
+    } else if (proxy['block-quic'] === 'off') {
+        result.append(',block-quic=false');
+    }
 
     // udp
     if (proxy.udp) {
@@ -539,6 +630,13 @@ function wireguard(proxy) {
     const ip_version = ipVersions[proxy['ip-version']] || proxy['ip-version'];
     result.appendIfPresent(`,ip-mode=${ip_version}`, 'ip-version');
 
+    // block-quic
+    if (proxy['block-quic'] === 'on') {
+        result.append(',block-quic=true');
+    } else if (proxy['block-quic'] === 'off') {
+        result.append(',block-quic=false');
+    }
+
     return result.toString();
 }
 
@@ -572,6 +670,13 @@ function hysteria2(proxy) {
 
     // tfo
     result.appendIfPresent(`,fast-open=${proxy.tfo}`, 'tfo');
+
+    // block-quic
+    if (proxy['block-quic'] === 'on') {
+        result.append(',block-quic=true');
+    } else if (proxy['block-quic'] === 'off') {
+        result.append(',block-quic=false');
+    }
 
     // udp
     if (proxy.udp) {

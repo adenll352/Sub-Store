@@ -41,6 +41,9 @@ Core functionalities:
 - [x] Surfboard (SS, VMess, Trojan, HTTP, SOCKS5, SOCKS5-TLS, WireGuard(Surfboard to Surfboard))
 - [x] Clash.Meta (Direct, SS, SSR, VMess, Trojan, HTTP, SOCKS5, Snell, VLESS, WireGuard, Hysteria, Hysteria 2, TUIC, SSH, mieru, AnyTLS)
 - [x] Stash (SS, SSR, VMess, Trojan, HTTP, SOCKS5, Snell, VLESS, WireGuard, Hysteria, TUIC, Juicity, SSH)
+
+Deprecated:
+
 - [x] Clash (SS, SSR, VMess, Trojan, HTTP, SOCKS5, Snell, VLESS, WireGuard)
 
 ### Supported Target Platforms
@@ -48,7 +51,6 @@ Core functionalities:
 - [x] Plain JSON
 - [x] Stash
 - [x] Clash.Meta(mihomo)
-- [x] Clash
 - [x] Surfboard
 - [x] Surge
 - [x] SurgeMac(Use mihomo to support protocols that are not supported by Surge itself)
@@ -59,6 +61,10 @@ Core functionalities:
 - [x] sing-box
 - [x] V2Ray
 - [x] V2Ray URI
+
+Deprecated:
+
+- [x] Clash
 
 ## 2. Subscription Formatting
 
@@ -122,3 +128,9 @@ This project is under the GPL V3 LICENSE.
 
 - Special thanks to @KOP-XIAO for his awesome resource-parser. Please give a [star](https://github.com/KOP-XIAO/QuantumultX) for his great work!
 - Special thanks to @Orz-3 and @58xinian for their awesome icons.
+
+## Sponsors
+
+[![image](./support.nodeseek.com_page_promotion_id=8.png)](https://yxvm.com)
+
+[NodeSupport](https://github.com/NodeSeekDev/NodeSupport) sponsored this project.
