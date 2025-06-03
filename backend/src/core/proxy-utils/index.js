@@ -142,9 +142,9 @@ async function processFn(
                         ? `#${rawArgs[1]}`
                         : ''
                 }`;
-                const downloadUrlMatch = url.match(
-                    /^\/api\/(file|module)\/(.+)/,
-                );
+                const downloadUrlMatch = url
+                    .split('#')[0]
+                    .match(/^\/api\/(file|module)\/(.+)/);
                 if (downloadUrlMatch) {
                     let type = '';
                     try {
@@ -177,7 +177,7 @@ async function processFn(
                 } else if (url?.startsWith('/')) {
                     try {
                         const fs = eval(`require("fs")`);
-                        script = fs.readFileSync(url, 'utf8');
+                        script = fs.readFileSync(url.split('#')[0], 'utf8');
                         // $.info(`Script loaded: >>>\n ${script}`);
                     } catch (err) {
                         $.error(
