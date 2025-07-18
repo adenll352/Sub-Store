@@ -121,7 +121,10 @@ async function gistBackupAction(action) {
         case 'upload':
             try {
                 content = $.read('#sub-store');
-                if ($.env.isNode) content = JSON.stringify($.cache, null, `  `);
+                content = content ? JSON.parse(content) : {};
+                if ($.env.isNode) content = JSON.parse(JSON.stringify($.cache));
+                content.settings.gistToken = '恢复后请重新设置 GitHub Token';
+                content = JSON.stringify(content, null, `  `);
                 $.info(`下载备份, 与本地内容对比...`);
                 const onlineContent = await gist.download(
                     GIST_BACKUP_FILE_NAME,
@@ -138,7 +141,10 @@ async function gistBackupAction(action) {
             settings.syncTime = new Date().getTime();
             $.write(settings, SETTINGS_KEY);
             content = $.read('#sub-store');
-            if ($.env.isNode) content = JSON.stringify($.cache, null, `  `);
+            content = content ? JSON.parse(content) : {};
+            if ($.env.isNode) content = JSON.parse(JSON.stringify($.cache));
+            content.settings.gistToken = '恢复后请重新设置 GitHub Token';
+            content = JSON.stringify(content, null, `  `);
             $.info(`上传备份中...`);
             try {
                 await gist.upload({
